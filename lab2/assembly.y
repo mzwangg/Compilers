@@ -32,11 +32,12 @@ void yyerror(const char* s);
 %union{
     struct code_block *assembly;
     struct var *ident;
+    int nval;
 }
 
 //%token 为每一个都自动分配不等的整数值
 %token ADD MINUS MUL DIV EQU LEFT_PAR RIGHT_PAR
-%token <assembly> NUMBER
+%token <nval> NUMBER
 %token <ident> ID
 
 //声明优先级和结合性
@@ -47,33 +48,14 @@ void yyerror(const char* s);
 %left LEFT_PAR RIGHT_PAR
 
 //设置生成式的属性
-%type <assembly> assignstmt
 %type <assembly> expr
 
 %%
 
 lines : lines expr ';' { printf("%s", $2->code); }
-      | lines assignstmt ';' { printf("%s", $2->code); }
       | lines ';'
       |
       ;
-
-assignstmt : ID EQU assignstmt { $$ = (struct code_block *)malloc(sizeof(struct code_block));
-                                    $$->addr = (char *)malloc(EXPR_MAX_LENTH); strcpy($$->addr, $3->addr);
-                                    $$->code = (char *)malloc(ASM_MAX_LENTH); strcpy($$->code, $3->code);
-                                    strcat($$->code, "LDR  R1, "); strcat($$->code, $1->addr); strcat($$->code, "\n");
-                                    strcat($$->code, "STR  R0, [R1]\n");
-                                    $$->is_number = 0; }
-
-           | ID EQU expr { $$ = (struct code_block *)malloc(sizeof(struct code_block));
-                              $$->addr = (char *)malloc(EXPR_MAX_LENTH); strcpy($$->addr, $3->addr);
-                              $$->code = (char *)malloc(ASM_MAX_LENTH); strcpy($$->code, $3->code);
-                              if($3->is_number){strcat($$->code, "MOV  R0, #"); strcat($$->code, $3->addr); strcat($$->code, "\n");}
-                              else{strcat($$->code, "LDR  R0, "); strcat($$->code, $3->addr); strcat($$->code, "\nLDR R0, [R0]\n");}
-                              strcat($$->code, "LDR  R1, "); strcat($$->code, $1->addr); strcat($$->code, "\n");
-                              strcat($$->code, "STR  R0, [R1]\n");
-                              $$->is_number = 0; }
-           ;
 
 expr : expr ADD expr { $$ = (struct code_block *)malloc(sizeof(struct code_block));
                        $$->addr = (char *)malloc(EXPR_MAX_LENTH); sprintf($$->addr, "addr_result_%d", result_num++);
@@ -135,7 +117,19 @@ expr : expr ADD expr { $$ = (struct code_block *)malloc(sizeof(struct code_block
                                strcat($$->code, "STR  R0, [R1]\n");
                                $$->is_number = 0; }
      
-     | NUMBER { $$ = $1;}
+     | NUMBER { $$ = (struct code_block *)malloc(sizeof(struct code_block));
+                $$->addr = (char *)malloc(EXPR_MAX_LENTH); sprintf($$->addr, "%d", $1);
+                $$->code = (char *)malloc(ASM_MAX_LENTH); sprintf($$->addr, "%d", $1); 
+                $$->is_number = 1;}
+
+     | ID EQU expr { $$ = (struct code_block *)malloc(sizeof(struct code_block));
+                              $$->addr = (char *)malloc(EXPR_MAX_LENTH); strcpy($$->addr, $1->addr);
+                              $$->code = (char *)malloc(ASM_MAX_LENTH); strcpy($$->code, $3->code);
+                              if($3->is_number){strcat($$->code, "MOV  R0, #"); strcat($$->code, $3->addr); strcat($$->code, "\n");}
+                              else{strcat($$->code, "LDR  R0, "); strcat($$->code, $3->addr); strcat($$->code, "\nLDR R0, [R0]\n");}
+                              strcat($$->code, "LDR  R1, "); strcat($$->code, $1->addr); strcat($$->code, "\n");
+                              strcat($$->code, "STR  R0, [R1]\n");
+                              $$->is_number = 0; }
 
      | ID { $$ = (struct code_block *)malloc(sizeof(struct code_block));
             $$->addr = (char *)malloc(EXPR_MAX_LENTH); strcpy($$->addr, $1->addr);
@@ -154,19 +148,14 @@ int yylex()
         if(t == ' ' || t == '\t' || t == '\n'){
             //do nothing;
         }else if (isdigit(t)){
-            yylval.assembly = (struct code_block *)malloc(sizeof(struct code_block));
-            yylval.assembly->addr = (char *)malloc(EXPR_MAX_LENTH); 
-            yylval.assembly->code = "";
-            yylval.assembly->is_number = 1;
-
-            char* pos = yylval.assembly->addr;
-            while(isdigit(t)){
-                *(pos++)=t;
-                t=getchar();
-            }
-            ungetc(t,stdin);//将读出的多余字符再次放回到缓冲区
-            *pos='\0';
-            return NUMBER;
+			yylval.nval = 0;//属性值，在此处即指对应的数值
+			while (isdigit(t))
+			{
+				yylval.nval = yylval.nval * 10 + t - '0';
+				t = getchar();
+			}
+			ungetc(t, stdin);//将读出的多余字符再次放回到缓冲区
+			return NUMBER;
 		}else if (isalpha(t) || t == '_'){//标识符以字母下划线开头
 			char* pos = str;
             while(isdigit(t) || isalpha(t) || t == '_'){
