@@ -1,0 +1,12 @@
+隐式类型转换：i32 -> i1
+隐式类型转换：float -> i32
+隐式类型转换：i32 -> float
+隐式类型转换：i32 -> float
+隐式类型转换：i32 -> float
+隐式类型转换：i32 -> float
+隐式类型转换：i32 -> float
+隐式类型转换：float -> i32
+ast built
+ir generated
+asm generated
+asm output ok

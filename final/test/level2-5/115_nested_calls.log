@@ -1,0 +1,9 @@
+隐式类型转换：i32 -> i1
+隐式类型转换：i32 -> i1
+隐式类型转换：i32 -> i1
+隐式类型转换：i32 -> i1
+ast built
+ir generated
+asm generated
+asm output ok
+TOTAL: 0H-0M-0S-0us

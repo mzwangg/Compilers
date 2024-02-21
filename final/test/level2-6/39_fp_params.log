@@ -1,0 +1,14 @@
+隐式类型转换：i32 -> float
+隐式类型转换：float -> i32
+隐式类型转换：i32 -> float
+隐式类型转换：i1 -> i32
+隐式类型转换：i1 -> float
+隐式类型转换：i1 -> float
+隐式类型转换：i32 -> float
+隐式类型转换：float -> i32
+隐式类型转换：i32 -> float
+隐式类型转换：float -> i32
+隐式类型转换：i32 -> float
+隐式类型转换：float -> i32
+ast built
+ir generated
